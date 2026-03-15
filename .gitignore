@@ -8,6 +8,9 @@ dist/
 build/
 *.whl
 
+# Environment variables
+.env
+
 # Virtual environments
 .venv/
 venv/
@@ -32,3 +35,4 @@ htmlcov/
 
 # Distribution
 *.tar.gz
+.docs/
