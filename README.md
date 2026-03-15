@@ -17,7 +17,7 @@ pip install autolab
 # Or individually
 pip install autojudge
 pip install autosteer
-pip install autoarena
+pip install autoclash
 ```
 
 Requires Python >= 3.10 (matching autoresearch).
@@ -63,14 +63,14 @@ autosteer --results results.tsv
 
 Strategy modes: `auto` (default) | `explore` (when stuck) | `exploit` (when winning)
 
-### autoarena — Multi-Agent Competition
+### autoclash — Multi-Agent Competition
 
 Run parallel AI agents with different strategies competing on the same problem.
 
 ```bash
-autoarena init --agents 3 --tag mar15    # Create 3 agent branches
-autoarena leaderboard                     # Who's winning?
-autoarena pollinate                       # Spread winning ideas
+autoclash init --agents 3 --tag mar15    # Create 3 agent branches
+autoclash leaderboard                     # Who's winning?
+autoclash pollinate                       # Spread winning ideas
 ```
 
 6 built-in strategies assigned round-robin: Architecture First, Hyperparams First, Optimizer First, Regularization First, Efficiency First, Radical.
@@ -88,7 +88,7 @@ These tools plug into the standard autoresearch loop:
 6. Repeat
 ```
 
-For multi-agent competitions, each agent runs this loop independently on its own branch, and `autoarena pollinate` spreads winning ideas between them.
+For multi-agent competitions, each agent runs this loop independently on its own branch, and `autoclash pollinate` spreads winning ideas between them.
 
 ## AI Agent Integration
 
@@ -98,7 +98,7 @@ The `skills/` directory contains [Claude Code](https://docs.anthropic.com/en/doc
 |-------|---------|
 | `autoresearch-evaluate` | Run autojudge after every experiment, interpret verdicts |
 | `autoresearch-steer` | Use autosteer for guided experiment selection |
-| `autoresearch-arena` | Set up and manage multi-agent competitions |
+| `autoresearch-clash` | Set up and manage multi-agent competitions |
 
 The `templates/program-addon.md` is a drop-in snippet you can append to your autoresearch `program.md` to integrate all three tools into the experiment loop.
 
@@ -115,12 +115,12 @@ autosteer --results results.tsv                       # 5 suggestions, auto stra
 autosteer --results results.tsv --strategy explore    # Favor new directions
 autosteer --results results.tsv --num-suggestions 10  # More suggestions
 
-# Arena
-autoarena init --agents 3 --tag TAG                   # Start competition
-autoarena status                                      # Quick overview
-autoarena leaderboard --detailed                      # Full analysis
-autoarena pollinate                                   # Cross-pollinate wins
-autoarena export --format json -o results.json        # Export data
+# Clash
+autoclash init --agents 3 --tag TAG                   # Start competition
+autoclash status                                      # Quick overview
+autoclash leaderboard --detailed                      # Full analysis
+autoclash pollinate                                   # Cross-pollinate wins
+autoclash export --format json -o results.json        # Export data
 ```
 
 All tools support `--quiet` for minimal output and `--no-color` for plain text (auto-disabled when piped).
@@ -130,7 +130,7 @@ All tools support `--quiet` for minimal output and `--no-color` for plain text (
 ```bash
 git clone https://github.com/dean0x/autolab.git
 cd autolab
-pip install -e ./auto-judge -e ./auto-steer -e ./auto-arena
+pip install -e ./auto-judge -e ./auto-steer -e ./auto-clash
 pip install pytest ruff
 pytest
 ```

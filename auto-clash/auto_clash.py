@@ -1,5 +1,5 @@
 """
-auto-arena: Multi-agent research competition orchestrator for autoresearch.
+auto-clash: Multi-agent research competition orchestrator for autoresearch.
 
 Manages multiple competing autoresearch agents on separate git branches,
 with leaderboard tracking and cross-pollination of winning ideas.
@@ -136,7 +136,7 @@ class Experiment:
 
 @dataclass
 class AgentConfig:
-    """Configuration for a single agent in the arena."""
+    """Configuration for a single agent in the clash."""
     id: int
     branch: str
     strategy: str
@@ -144,8 +144,8 @@ class AgentConfig:
 
 
 @dataclass
-class ArenaConfig:
-    """Root arena state persisted to arena.json."""
+class ClashConfig:
+    """Root clash state persisted to clash.json."""
     tag: str
     base_branch: str
     base_commit: str
@@ -228,27 +228,27 @@ def _git_log_oneline(branch: str, base_commit: str, max_count: int = 50) -> Resu
 
 
 # ---------------------------------------------------------------------------
-# Arena config persistence
+# Clash config persistence
 # ---------------------------------------------------------------------------
 
-ARENA_CONFIG_FILE = "arena.json"
+CLASH_CONFIG_FILE = "clash.json"
 
 
-def _arena_config_path() -> Path:
-    """Return the path to arena.json in the repo root."""
+def _clash_config_path() -> Path:
+    """Return the path to clash.json in the repo root."""
     result = _run_git("rev-parse", "--show-toplevel")
     if not result.ok:
-        return Path(ARENA_CONFIG_FILE)
-    return Path(result.value) / ARENA_CONFIG_FILE
+        return Path(CLASH_CONFIG_FILE)
+    return Path(result.value) / CLASH_CONFIG_FILE
 
 
-def _load_arena_config() -> Result[ArenaConfig]:
-    """Load arena.json from the repo root."""
-    path = _arena_config_path()
+def _load_clash_config() -> Result[ClashConfig]:
+    """Load clash.json from the repo root."""
+    path = _clash_config_path()
     if not path.exists():
         return Err(
-            f"No arena config found at {path}. "
-            "Run 'autoarena init' first."
+            f"No clash config found at {path}. "
+            "Run 'autoclash init' first."
         )
     try:
         raw = json.loads(path.read_text())
@@ -261,7 +261,7 @@ def _load_arena_config() -> Result[ArenaConfig]:
             )
             for a in raw.get("agents", [])
         ]
-        return Ok(ArenaConfig(
+        return Ok(ClashConfig(
             tag=raw["tag"],
             base_branch=raw["base_branch"],
             base_commit=raw["base_commit"],
@@ -269,12 +269,12 @@ def _load_arena_config() -> Result[ArenaConfig]:
             agents=agents,
         ))
     except (json.JSONDecodeError, KeyError, TypeError, ValueError, AttributeError) as exc:
-        return Err(f"Corrupt arena.json: {exc}")
+        return Err(f"Corrupt clash.json: {exc}")
 
 
-def _save_arena_config(config: ArenaConfig) -> Result[None]:
-    """Persist arena state to arena.json atomically (not committed to git)."""
-    path = _arena_config_path()
+def _save_clash_config(config: ClashConfig) -> Result[None]:
+    """Persist clash state to clash.json atomically (not committed to git)."""
+    path = _clash_config_path()
     data = {
         "tag": config.tag,
         "base_branch": config.base_branch,
@@ -294,7 +294,7 @@ def _save_arena_config(config: ArenaConfig) -> Result[None]:
             raise
         return Ok(None)
     except OSError as exc:
-        return Err(f"Failed to write arena.json: {exc}")
+        return Err(f"Failed to write clash.json: {exc}")
 
 
 # ---------------------------------------------------------------------------
@@ -405,7 +405,7 @@ def _compute_improvements(experiments: list[Experiment]) -> list[tuple[Experimen
 def _generate_program_md(strategy: dict[str, str], agent_id: int, tag: str) -> str:
     """Generate a program.md variant for an agent with a specific research strategy."""
     return f"""\
-# Autoresearch Program — Arena {tag}, Agent {agent_id}
+# Autoresearch Program — Clash {tag}, Agent {agent_id}
 
 ## Strategy: {strategy['label']}
 
@@ -418,7 +418,7 @@ def _generate_program_md(strategy: dict[str, str], agent_id: int, tag: str) -> s
 3. Read results: `grep "^val_bpb:\\|^peak_vram_mb:" run.log`
 4. Record results in `results.tsv` (tab-separated):
    - commit (short hash), val_bpb, memory_gb (peak_vram_mb / 1024), status, description
-5. **Commit results.tsv** after each experiment so arena tracking works:
+5. **Commit results.tsv** after each experiment so clash tracking works:
    `git add results.tsv && git commit -m "update results"`
 6. If val_bpb improved (lower), set status to `keep` and advance the branch.
 7. If val_bpb is equal or worse, set status to `discard` and `git reset --hard HEAD~1`
@@ -427,8 +427,8 @@ def _generate_program_md(strategy: dict[str, str], agent_id: int, tag: str) -> s
 
 ## Hints
 
-If an `arena-hints.md` file exists in the repo root, it contains insights from the
-leading agent in the arena. Consider incorporating their successful ideas.
+If an `clash-hints.md` file exists in the repo root, it contains insights from the
+leading agent in the clash. Consider incorporating their successful ideas.
 
 ## Goal
 
@@ -441,7 +441,7 @@ Minimize `val_bpb` within the 5-minute time budget per experiment. Lower is bett
 # ---------------------------------------------------------------------------
 
 @click.group(epilog="Exit codes: 0 = success, 1 = error")
-@click.version_option(version="0.1.0", prog_name="autoarena")
+@click.version_option(version="0.1.0", prog_name="autoclash")
 @click.option("--no-color", is_flag=True, default=False, help="Disable colored output")
 @click.option("--quiet", "-q", is_flag=True, default=False, help="Minimal output")
 @click.pass_context
@@ -457,10 +457,10 @@ def cli(ctx: click.Context, no_color: bool, quiet: bool) -> None:
 @cli.command()
 @click.option("--agents", "-n", type=int, required=True, help="Number of competing agents")
 @click.option("--base-branch", "-b", type=str, default="main", help="Branch to fork from")
-@click.option("--tag", "-t", type=str, required=True, help="Arena tag (e.g. mar15)")
+@click.option("--tag", "-t", type=str, required=True, help="Clash tag (e.g. mar15)")
 @click.pass_context
 def init(ctx: click.Context, agents: int, base_branch: str, tag: str) -> None:
-    """Initialize a new arena with N competing agent branches."""
+    """Initialize a new clash with N competing agent branches."""
     cfg = ctx.obj["cfg"]
     if agents < 1:
         click.echo("Error: --agents must be at least 1.", err=True)
@@ -482,11 +482,11 @@ def init(ctx: click.Context, agents: int, base_branch: str, tag: str) -> None:
         click.echo(f"Error: base branch '{base_branch}' does not exist.", err=True)
         sys.exit(1)
 
-    # Check for existing arena config
-    config_path = _arena_config_path()
+    # Check for existing clash config
+    config_path = _clash_config_path()
     if config_path.exists():
         click.echo(
-            f"Error: arena.json already exists at {config_path}. "
+            f"Error: clash.json already exists at {config_path}. "
             "Remove it first or use a different repo.",
             err=True,
         )
@@ -510,7 +510,7 @@ def init(ctx: click.Context, agents: int, base_branch: str, tag: str) -> None:
     try:
         for i in range(1, agents + 1):
             strategy = STRATEGIES[(i - 1) % len(STRATEGIES)]
-            branch_name = f"arena/{tag}-agent-{i}"
+            branch_name = f"clash/{tag}-agent-{i}"
 
             # Check if branch already exists
             if _git_branch_exists(branch_name):
@@ -538,7 +538,7 @@ def init(ctx: click.Context, agents: int, base_branch: str, tag: str) -> None:
             _run_git("add", "program.md", "results.tsv")
             commit_result = _run_git(
                 "commit", "-m",
-                f"arena({tag}): initialize agent {i} with {strategy['key']} strategy",
+                f"clash({tag}): initialize agent {i} with {strategy['key']} strategy",
             )
             if not commit_result.ok:
                 click.echo(f"Warning: commit on {branch_name}: {commit_result.error}", err=True)
@@ -559,22 +559,22 @@ def init(ctx: click.Context, agents: int, base_branch: str, tag: str) -> None:
         # Always return to original branch
         _run_git("checkout", current_branch.value, check=False)
 
-    # Save arena config (not committed)
-    arena = ArenaConfig(
+    # Save clash config (not committed)
+    clash = ClashConfig(
         tag=tag,
         base_branch=base_branch,
         base_commit=base_sha.value,
         created_at=datetime.now(timezone.utc).isoformat(timespec="seconds"),
         agents=agent_configs,
     )
-    save_result = _save_arena_config(arena)
+    save_result = _save_clash_config(clash)
     if not save_result.ok:
         click.echo(f"Error saving config: {save_result.error}", err=True)
         sys.exit(1)
 
     # Print summary
-    click.echo(f"\n== {cfg.styled('autoarena', fg='cyan', bold=True)} initialized ==")
-    click.echo(f"Arena: {tag} | Agents: {agents} | Base: {base_branch} ({base_sha.value})")
+    click.echo(f"\n== {cfg.styled('autoclash', fg='cyan', bold=True)} initialized ==")
+    click.echo(f"Clash: {tag} | Agents: {agents} | Base: {base_branch} ({base_sha.value})")
     click.echo()
     for ac in agent_configs:
         strategy_info = next(s for s in STRATEGIES if s["key"] == ac.strategy)
@@ -586,17 +586,17 @@ def init(ctx: click.Context, agents: int, base_branch: str, tag: str) -> None:
         click.echo(f"  git checkout {ac.branch}")
         click.echo(f"  # Start your AI agent here (e.g., claude, codex, gemini)")
         click.echo()
-    click.echo(f"Monitor progress with: autoarena status")
-    click.echo(f"Cross-pollinate ideas with: autoarena pollinate")
+    click.echo(f"Monitor progress with: autoclash status")
+    click.echo(f"Cross-pollinate ideas with: autoclash pollinate")
 
 
 @cli.command()
 @click.pass_context
 def status(ctx: click.Context) -> None:
-    """Show current arena status and quick leaderboard."""
+    """Show current clash status and quick leaderboard."""
     cfg = ctx.obj["cfg"]
 
-    config_result = _load_arena_config()
+    config_result = _load_clash_config()
     if not config_result.ok:
         click.echo(f"Error: {config_result.error}", err=True)
         sys.exit(1)
@@ -621,9 +621,9 @@ def status(ctx: click.Context) -> None:
             click.echo("No results yet.")
         return
 
-    click.echo(f"\n== {cfg.styled('autoarena', fg='cyan', bold=True)} status ==")
+    click.echo(f"\n== {cfg.styled('autoclash', fg='cyan', bold=True)} status ==")
     click.echo(
-        f"Arena: {config.tag} | Agents: {len(config.agents)} | "
+        f"Clash: {config.tag} | Agents: {len(config.agents)} | "
         f"Started: {config.created_at}"
     )
     click.echo()
@@ -667,7 +667,7 @@ def leaderboard(ctx: click.Context, detailed: bool) -> None:
     """Show detailed leaderboard comparison across all agents."""
     cfg = ctx.obj["cfg"]
 
-    config_result = _load_arena_config()
+    config_result = _load_clash_config()
     if not config_result.ok:
         click.echo(f"Error: {config_result.error}", err=True)
         sys.exit(1)
@@ -680,9 +680,9 @@ def leaderboard(ctx: click.Context, detailed: bool) -> None:
         key=lambda s: s.best_val_bpb if s.best_val_bpb is not None else float("inf"),
     )
 
-    click.echo(f"\n== {cfg.styled('autoarena', fg='cyan', bold=True)} leaderboard ==")
+    click.echo(f"\n== {cfg.styled('autoclash', fg='cyan', bold=True)} leaderboard ==")
     click.echo(
-        f"Arena: {config.tag} | Agents: {len(config.agents)} | "
+        f"Clash: {config.tag} | Agents: {len(config.agents)} | "
         f"Base: {config.base_branch} ({config.base_commit})"
     )
     click.echo()
@@ -774,19 +774,19 @@ def _find_impactful_experiments(status: AgentStatus) -> list[tuple[Experiment, f
 
 
 def _build_hints_content(
-    config: ArenaConfig,
+    config: ClashConfig,
     leader: AgentStatus,
     impactful: list[tuple[Experiment, float]],
 ) -> str:
-    """Build the arena-hints.md content from leader data."""
+    """Build the clash-hints.md content from leader data."""
     leader_strategy = next(
         (st for st in STRATEGIES if st["key"] == leader.agent.strategy),
         {"label": leader.agent.strategy},
     )
     lines: list[str] = [
-        f"# Hints from Arena {config.tag}",
+        f"# Hints from Clash {config.tag}",
         f"",
-        f"Generated by `auto-arena pollinate` at "
+        f"Generated by `auto-clash pollinate` at "
         f"{datetime.now(timezone.utc).isoformat(timespec='seconds')}",
         f"",
         f"## Leading Agent",
@@ -845,7 +845,7 @@ def _build_hints_content(
 def pollinate(ctx: click.Context) -> None:
     """Cross-pollinate: share winning ideas from the best agent with all others."""
     cfg = ctx.obj["cfg"]
-    config_result = _load_arena_config()
+    config_result = _load_clash_config()
     if not config_result.ok:
         click.echo(f"Error: {config_result.error}", err=True)
         sys.exit(1)
@@ -873,7 +873,7 @@ def pollinate(ctx: click.Context) -> None:
         click.echo(f"Error: {repo_root.error}", err=True)
         sys.exit(1)
 
-    hints_path = Path(repo_root.value) / "arena-hints.md"
+    hints_path = Path(repo_root.value) / "clash-hints.md"
     hints_path.write_text(hints_content)
 
     click.echo(f"Hints from Agent {leader.agent.id} written to {hints_path}")
@@ -893,7 +893,7 @@ def pollinate(ctx: click.Context) -> None:
 def export(ctx: click.Context, fmt: str, output: Optional[str]) -> None:
     """Export all agent results to a single file for external analysis."""
     cfg = ctx.obj["cfg"]
-    config_result = _load_arena_config()
+    config_result = _load_clash_config()
     if not config_result.ok:
         click.echo(f"Error: {config_result.error}", err=True)
         sys.exit(1)
@@ -903,7 +903,7 @@ def export(ctx: click.Context, fmt: str, output: Optional[str]) -> None:
 
     if fmt == "json":
         data = {
-            "arena": config.tag,
+            "clash": config.tag,
             "base_branch": config.base_branch,
             "base_commit": config.base_commit,
             "created_at": config.created_at,

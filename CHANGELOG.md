@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - **autojudge**: Statistical experiment evaluation with noise-aware verdicts
 - **autosteer**: Data-driven research direction suggestions with explore/exploit strategies
-- **autoarena**: Multi-agent competition orchestrator with 6 built-in strategies
+- **autoclash**: Multi-agent competition orchestrator with 6 built-in strategies
 - Claude Code skills for AI agent integration
 - CI/CD pipelines (lint, test, publish)
 - 285 tests across all three tools

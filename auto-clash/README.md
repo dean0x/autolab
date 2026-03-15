@@ -1,28 +1,28 @@
-# autoarena
+# autoclash
 
 Multi-agent research competition orchestrator for [autoresearch](https://github.com/karpathy/autoresearch). Run parallel AI agents with different strategies and cross-pollinate winning ideas.
 
 ## Install
 
 ```bash
-pip install autoarena
+pip install autoclash
 ```
 
 ## Usage
 
 ```bash
 # Initialize a 3-agent competition
-autoarena init --agents 3 --tag mar15
+autoclash init --agents 3 --tag mar15
 
 # Check who's winning
-autoarena status
-autoarena leaderboard --detailed
+autoclash status
+autoclash leaderboard --detailed
 
 # Spread winning ideas to all agents
-autoarena pollinate
+autoclash pollinate
 
 # Export results
-autoarena export --format json -o arena-results.json
+autoclash export --format json -o clash-results.json
 ```
 
 ## How It Works
@@ -30,7 +30,7 @@ autoarena export --format json -o arena-results.json
 1. **init** creates one git branch per agent, each with a different research strategy
 2. Each agent works independently on its branch using autojudge + autosteer
 3. **leaderboard** ranks agents by best val_bpb with keep rate tracking
-4. **pollinate** writes the leader's best experiments to `arena-hints.md` — readable from any branch
+4. **pollinate** writes the leader's best experiments to `clash-hints.md` — readable from any branch
 5. Agents incorporate hints and continue competing
 
 ## Built-in Strategies
@@ -50,12 +50,12 @@ Strategies are assigned round-robin. With 3 agents, you get 3 different strategi
 
 | Command | Description |
 |---------|-------------|
-| `autoarena init --agents N --tag TAG` | Create N agent branches |
-| `autoarena status` | Quick overview with current leader |
-| `autoarena leaderboard` | Ranked table with keep rates |
-| `autoarena leaderboard --detailed` | Full trajectories + strategy effectiveness |
-| `autoarena pollinate` | Cross-pollinate winning ideas |
-| `autoarena export --format json\|tsv` | Export results for analysis |
+| `autoclash init --agents N --tag TAG` | Create N agent branches |
+| `autoclash status` | Quick overview with current leader |
+| `autoclash leaderboard` | Ranked table with keep rates |
+| `autoclash leaderboard --detailed` | Full trajectories + strategy effectiveness |
+| `autoclash pollinate` | Cross-pollinate winning ideas |
+| `autoclash export --format json\|tsv` | Export results for analysis |
 
 ## Requirements
 

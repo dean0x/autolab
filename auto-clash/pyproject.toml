@@ -1,5 +1,5 @@
 [project]
-name = "autoarena"
+name = "autoclash"
 version = "0.1.0"
 description = "Multi-agent research competition orchestrator for autoresearch"
 requires-python = ">=3.10"
@@ -20,7 +20,7 @@ classifiers = [
 dependencies = ["click>=8.0"]
 
 [project.scripts]
-autoarena = "auto_arena:main"
+autoclash = "auto_clash:main"
 
 [project.urls]
 Homepage = "https://github.com/dean0x/autolab"
@@ -32,4 +32,4 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["auto_arena.py"]
+packages = ["auto_clash.py"]

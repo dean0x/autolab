@@ -28,7 +28,7 @@ classifiers = [
 dependencies = [
     "autojudge==0.1.0",
     "autosteer==0.1.0",
-    "autoarena==0.1.0",
+    "autoclash==0.1.0",
 ]
 
 [project.urls]

@@ -6,7 +6,7 @@
 
 - [ ] autojudge
 - [ ] autosteer
-- [ ] autoarena
+- [ ] autoclash
 - [ ] project-wide (CI, docs, etc.)
 
 ## Test Plan

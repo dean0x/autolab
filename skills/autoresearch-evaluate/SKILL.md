@@ -107,7 +107,7 @@ This skill works with sibling autoresearch skills:
 | Skill | Relationship |
 |-------|-------------|
 | **autoresearch-steer** | After evaluating, use steer to decide what to try next |
-| **autoresearch-arena** | Arena uses autojudge internally for multi-agent competitions |
+| **autoresearch-clash** | Clash uses autojudge internally for multi-agent competitions |
 
 Typical flow: **run experiment** -> **evaluate** (this skill) -> **steer** (next experiment).
 
@@ -133,7 +133,7 @@ It does **NOT** apply when:
 - Working on a project that is not autoresearch / GPT pretraining
 - Reviewing historical results (autojudge evaluates the latest experiment only)
 - Choosing what experiment to run next (use autoresearch-steer)
-- Setting up multi-agent competitions (use autoresearch-arena)
+- Setting up multi-agent competitions (use autoresearch-clash)
 
 ---
 

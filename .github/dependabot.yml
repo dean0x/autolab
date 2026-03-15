@@ -15,7 +15,7 @@ updates:
       - dean0x
 
   - package-ecosystem: pip
-    directory: /auto-arena
+    directory: /auto-clash
     schedule:
       interval: weekly
     reviewers:

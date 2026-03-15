@@ -1,16 +1,16 @@
-"""Tests for autoarena — multi-agent competition orchestrator."""
+"""Tests for autoclash — multi-agent competition orchestrator."""
 
 import sys
 
 import pytest
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "auto-arena"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "auto-clash"))
 
-from auto_arena import (
+from auto_clash import (
     AgentConfig,
     AgentStatus,
-    ArenaConfig,
+    ClashConfig,
     Experiment,
     STRATEGIES,
     _build_hints_content,
@@ -138,20 +138,20 @@ class TestComputeImprovements:
 # ---------------------------------------------------------------------------
 
 class TestBuildHintsContent:
-    def _make_config(self) -> ArenaConfig:
-        return ArenaConfig(
+    def _make_config(self) -> ClashConfig:
+        return ClashConfig(
             tag="test",
             base_branch="main",
             base_commit="abc123",
             created_at="2025-01-01T00:00:00+00:00",
             agents=[
-                AgentConfig(id=1, branch="arena/test-agent-1", strategy="architecture-first"),
+                AgentConfig(id=1, branch="clash/test-agent-1", strategy="architecture-first"),
             ],
         )
 
     def _make_leader(self) -> AgentStatus:
         return AgentStatus(
-            agent=AgentConfig(id=1, branch="arena/test-agent-1", strategy="architecture-first"),
+            agent=AgentConfig(id=1, branch="clash/test-agent-1", strategy="architecture-first"),
             experiments=[_exp("a", 4.0), _exp("b", 3.8)],
             best_val_bpb=3.8,
             best_experiment=_exp("b", 3.8, desc="best experiment"),

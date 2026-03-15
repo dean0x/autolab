@@ -12,12 +12,12 @@ Autolab tools are **local CLI utilities** that read TSV files and git state. The
 
 - Make network requests
 - Execute arbitrary code from input files
-- Write outside the current working directory (except git operations in autoarena)
+- Write outside the current working directory (except git operations in autoclash)
 - Require elevated privileges
 
-### autoarena Git Operations
+### autoclash Git Operations
 
-`autoarena` creates and switches git branches. Malicious `results.tsv` descriptions could theoretically inject git arguments if not properly escaped. All git arguments are passed as explicit positional parameters, never interpolated into shell strings.
+`autoclash` creates and switches git branches. Malicious `results.tsv` descriptions could theoretically inject git arguments if not properly escaped. All git arguments are passed as explicit positional parameters, never interpolated into shell strings.
 
 ## Reporting a Vulnerability
 
@@ -56,7 +56,7 @@ To report a vulnerability, [create a private security advisory](https://github.c
 
 - Command injection via malformed TSV input
 - Path traversal in file arguments
-- Git argument injection in autoarena
+- Git argument injection in autoclash
 - Denial of service via crafted input files
 
 ### Out of Scope
