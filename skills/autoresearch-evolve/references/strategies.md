@@ -1,4 +1,4 @@
-# Autoresearch Clash — Strategy Reference
+# Autoresearch Evolve — Strategy Reference
 
 Full descriptions of built-in strategies, tradeoffs, diversity principles, and agent allocation.
 
@@ -92,7 +92,7 @@ Full descriptions of built-in strategies, tradeoffs, diversity principles, and a
 
 The core insight: parallel agents with identical strategies explore a narrow band of the search space. Diverse strategies cover more ground, and cross-pollination combines the best of each.
 
-**Evidence from the clash model**:
+**Evidence from the evolve model**:
 - 3 agents with different strategies find optimal configurations 2-3x faster than 3 agents with the same strategy
 - The winning strategy changes over time — architecture wins early, hyperparams win late
 - Cross-pollination creates combinations that no single strategy would discover
@@ -111,7 +111,7 @@ The round-robin default assigns strategies in order: Architecture → Hyperparam
 
 ### Custom Strategy Overrides
 
-You can override the default assignment by editing `clash.json`:
+You can override the default assignment by editing `evolve.json`:
 
 ```json
 {

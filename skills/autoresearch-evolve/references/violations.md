@@ -1,6 +1,6 @@
-# Autoresearch Clash — Violation Examples
+# Autoresearch Evolve — Violation Examples
 
-Expanded anti-pattern examples showing what goes wrong when clash is misused.
+Expanded anti-pattern examples showing what goes wrong when evolve is misused.
 
 ---
 
@@ -15,14 +15,14 @@ Launching 3 agents all using the default strategy or manually assigning the same
 - All agents explore the same narrow band of the search space.
 - Compute is wasted on redundant experiments.
 - Cross-pollination produces no new information (everyone already tried the same things).
-- You lose the primary advantage of clash: diverse parallel exploration.
+- You lose the primary advantage of evolve: diverse parallel exploration.
 
 ### Correct Approach
 
 Let the round-robin default assign different strategies, or manually assign diverse ones:
 
 ```bash
-autoclash init --agents 3 --tag experiment-run
+autoevolve init --agents 3 --tag experiment-run
 # Automatically assigns: Architecture First, Hyperparams First, Optimizer First
 ```
 
@@ -32,22 +32,22 @@ autoclash init --agents 3 --tag experiment-run
 
 ### The Mistake
 
-Running the clash for 20+ experiments per agent without ever running `autoclash pollinate`.
+Running the evolve for 20+ experiments per agent without ever running `autoevolve pollinate`.
 
 ### What Goes Wrong
 
 - Agents reinvent each other's discoveries independently. Agent 2 spends 5 experiments finding something Agent 1 found in experiment #3.
 - Winning ideas stay siloed in one branch.
-- The collective knowledge of the clash is fragmented.
+- The collective knowledge of the evolve is fragmented.
 
 ### Correct Approach
 
 Pollinate regularly — typically after every 5-10 experiments per agent, or whenever the leaderboard shows a clear leader:
 
 ```bash
-autoclash leaderboard
+autoevolve leaderboard
 # If a leader has emerged:
-autoclash pollinate
+autoevolve pollinate
 ```
 
 ---
@@ -56,7 +56,7 @@ autoclash pollinate
 
 ### The Mistake
 
-Running `autoclash pollinate` after only 2-3 experiments per agent.
+Running `autoevolve pollinate` after only 2-3 experiments per agent.
 
 ### What Goes Wrong
 
@@ -92,12 +92,12 @@ Pollinate every 5-10 experiments per agent. Frequent small pollinations are bett
 
 ### The Mistake
 
-Launching an clash with only 1-2 agents.
+Launching an evolve with only 1-2 agents.
 
 ### What Goes Wrong
 
 - 1 agent: no competition, no diversity. Just use autosteer directly.
-- 2 agents: binary comparison, minimal strategy diversity. The "clash" adds overhead without meaningful benefit.
+- 2 agents: binary comparison, minimal strategy diversity. The "evolve" adds overhead without meaningful benefit.
 
 ### Correct Approach
 
@@ -109,7 +109,7 @@ Minimum 3 agents for meaningful strategy diversity. This gives you 3 different a
 
 ### The Mistake
 
-Launching the clash and not checking `status` or `leaderboard` until the end.
+Launching the evolve and not checking `status` or `leaderboard` until the end.
 
 ### What Goes Wrong
 
@@ -122,7 +122,7 @@ Launching the clash and not checking `status` or `leaderboard` until the end.
 Check the leaderboard periodically:
 
 ```bash
-autoclash leaderboard --detailed
+autoevolve leaderboard --detailed
 ```
 
 Key signals to watch:
@@ -141,12 +141,12 @@ Looking only at the overall leaderboard score without examining which strategies
 ### What Goes Wrong
 
 - You miss insights about the problem space. If Architecture First is winning, that tells you the bottleneck is structural.
-- You can't make informed decisions about custom strategy allocation for the next clash run.
+- You can't make informed decisions about custom strategy allocation for the next evolve run.
 - The `--detailed` flag exists for this purpose — not using it is leaving data on the table.
 
 ### Correct Approach
 
-Use `autoclash leaderboard --detailed` to see strategy-level metrics. Use this data to inform:
+Use `autoevolve leaderboard --detailed` to see strategy-level metrics. Use this data to inform:
 - Which strategies to duplicate if adding more agents
-- Whether to run a follow-up clash with adjusted allocations
-- What direction to pursue in single-agent mode after the clash ends
+- Whether to run a follow-up evolve with adjusted allocations
+- What direction to pursue in single-agent mode after the evolve ends

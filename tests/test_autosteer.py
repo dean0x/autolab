@@ -1096,7 +1096,7 @@ class TestCLI:
         runner = CliRunner()
         result = runner.invoke(cli, ["--version"])
         assert result.exit_code == 0
-        assert "0.1.0" in result.output
+        assert "1.0.0" in result.output
 
     def test_no_color_flag_suppresses_ansi(self, tmp_path: Path) -> None:
         runner = CliRunner()

@@ -125,7 +125,7 @@ Does NOT apply when:
 - The project is not autoresearch or GPT pretraining
 - The user is doing exploratory prototyping outside the experiment loop
 - The task is evaluating results (use `autoresearch-evaluate` instead)
-- The task is managing multi-agent competitions (use `autoresearch-clash` instead)
+- The task is managing multi-agent competitions (use `autoresearch-evolve` instead)
 
 ---
 
@@ -136,7 +136,7 @@ This skill works with sibling autoresearch skills:
 | Skill | Relationship |
 |-------|-------------|
 | `autoresearch-evaluate` | After running an experiment suggested by autosteer, use autojudge to evaluate the result. The verdict feeds back into results.tsv for the next steer cycle. |
-| `autoresearch-clash` | In multi-agent competitions, clash assigns strategies to agents. Each agent still uses autosteer within its assigned strategy to pick individual experiments. |
+| `autoresearch-evolve` | In multi-agent competitions, evolve assigns strategies to agents. Each agent still uses autosteer within its assigned strategy to pick individual experiments. |
 
 The feedback loop: **steer** (pick experiment) -> **run** (train) -> **evaluate** (judge result) -> **steer** (pick next).
 

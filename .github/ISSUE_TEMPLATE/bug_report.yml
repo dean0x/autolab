@@ -1,5 +1,5 @@
 name: Bug Report
-description: Report a bug in autojudge, autosteer, or autoclash
+description: Report a bug in autojudge, autosteer, or autoevolve
 labels: ["bug"]
 body:
   - type: dropdown
@@ -10,7 +10,7 @@ body:
       options:
         - autojudge
         - autosteer
-        - autoclash
+        - autoevolve
     validations:
       required: true
 

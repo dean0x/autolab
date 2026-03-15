@@ -10,7 +10,7 @@ body:
       options:
         - autojudge
         - autosteer
-        - autoclash
+        - autoevolve
         - project-wide
     validations:
       required: true

@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        package: [auto-judge, auto-steer, auto-clash]
+        package: [auto-judge, auto-steer, auto-evolve]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

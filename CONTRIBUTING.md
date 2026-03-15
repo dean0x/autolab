@@ -9,7 +9,7 @@ git clone https://github.com/YOUR_USERNAME/autolab.git
 cd autolab
 
 # Install all tools in development mode
-pip install -e ./auto-judge -e ./auto-steer -e ./auto-clash
+pip install -e ./auto-judge -e ./auto-steer -e ./auto-evolve
 
 # Install dev dependencies
 pip install pytest ruff mypy
@@ -27,7 +27,7 @@ ruff check .
 autolab/
 ├── auto-judge/          # autojudge CLI — experiment evaluation
 ├── auto-steer/          # autosteer CLI — research direction suggestions
-├── auto-clash/          # autoclash CLI — multi-agent competitions
+├── auto-evolve/          # autoevolve CLI — multi-agent competitions
 ├── skills/              # Claude Code skill definitions
 ├── templates/           # User-facing integration templates
 └── test-data/           # Sample data for testing
@@ -64,7 +64,7 @@ Each tool is an independent Python package with its own `pyproject.toml`.
 ## Reporting Issues
 
 Please include:
-- Which tool (`autojudge`, `autosteer`, or `autoclash`)
+- Which tool (`autojudge`, `autosteer`, or `autoevolve`)
 - Python version (`python --version`)
 - A sample `results.tsv` if relevant (anonymize if needed)
 - The full command you ran

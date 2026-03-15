@@ -1,6 +1,6 @@
 [project]
 name = "autojudge"
-version = "0.1.0"
+version = "1.0.0"
 description = "Smarter experiment evaluation for autoresearch — replaces eyeballing val_bpb with statistical verdicts"
 requires-python = ">=3.10"
 license = "MIT"

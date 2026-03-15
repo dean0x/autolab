@@ -974,7 +974,7 @@ def format_json(result: JudgmentResult) -> str:
 
 
 @click.command(epilog="Exit codes: 0 = success/keep, 1 = error, 2 = discard/crash verdict")
-@click.version_option(version="0.1.0", prog_name="autojudge")
+@click.version_option(version="1.0.0", prog_name="autojudge")
 @click.option(
     "--results", "results_path",
     default="results.tsv",

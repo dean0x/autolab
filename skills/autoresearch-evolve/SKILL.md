@@ -1,16 +1,16 @@
 ---
-name: autoresearch-clash
+name: autoresearch-evolve
 description: >-
-  This skill should be used when the user asks to "set up clash", "run competing
+  This skill should be used when the user asks to "set up evolve", "run competing
   agents", "pollinate results", "check leaderboard", or needs to coordinate
-  multi-agent research competitions. Provides parallel strategy exploration via autoclash.
+  multi-agent research competitions. Provides parallel strategy exploration via autoevolve.
 user-invocable: false
 allowed-tools: Bash, Read
 ---
 
-# Autoresearch Clash
+# Autoresearch Evolve
 
-Run multi-agent research competitions with autoclash. Parallel agents with diverse strategies explore the search space faster than a single agent.
+Run multi-agent research competitions with autoevolve. Parallel agents with diverse strategies explore the search space faster than a single agent.
 
 ---
 
@@ -19,7 +19,7 @@ Run multi-agent research competitions with autoclash. Parallel agents with diver
 > **COMPETE TO DISCOVER**
 >
 > Parallel agents with different strategies explore the search space faster
-> than a single agent. Use clash to diversify approaches and cross-pollinate wins.
+> than a single agent. Use evolve to diversify approaches and cross-pollinate wins.
 > Homogeneous strategies waste compute. Diversity is the engine of discovery.
 
 ## When This Skill Activates
@@ -41,16 +41,16 @@ Run multi-agent research competitions with autoclash. Parallel agents with diver
 
 ## Workflow
 
-### 1. Initialize the clash
+### 1. Initialize the evolve
 
 ```bash
-autoclash init --agents 3 --tag mar15
+autoevolve init --agents 3 --tag mar15
 ```
 
 This creates:
-- One git branch per agent (`clash/mar15-agent-1`, `clash/mar15-agent-2`, etc.)
+- One git branch per agent (`evolve/mar15-agent-1`, `evolve/mar15-agent-2`, etc.)
 - Each branch gets a `program.md` with a different strategy
-- An `clash.json` config file tracking the competition
+- An `evolve.json` config file tracking the competition
 
 Agents are assigned strategies round-robin from the built-in pool. With 3 agents, you get 3 different strategies competing. See `references/strategies.md` for the full catalog.
 
@@ -59,16 +59,16 @@ Agents are assigned strategies round-robin from the built-in pool. With 3 agents
 Check out each branch and launch your AI agent. Each agent works independently, using autojudge to evaluate and autosteer to choose its next moves.
 
 ```bash
-git checkout clash/mar15-agent-1
+git checkout evolve/mar15-agent-1
 # Start agent (claude, codex, gemini, etc.)
 ```
 
 ### 3. Monitor progress
 
 ```bash
-autoclash status          # quick overview with leader
-autoclash leaderboard     # ranked table with keep rates
-autoclash leaderboard --detailed  # full trajectories + strategy effectiveness
+autoevolve status          # quick overview with leader
+autoevolve leaderboard     # ranked table with keep rates
+autoevolve leaderboard --detailed  # full trajectories + strategy effectiveness
 ```
 
 Check the leaderboard regularly to know when to pollinate. A clear leader with 3+ keeps ahead of the pack is a good pollination signal.
@@ -76,18 +76,18 @@ Check the leaderboard regularly to know when to pollinate. A clear leader with 3
 ### 4. Cross-pollinate winning ideas
 
 ```bash
-autoclash pollinate
+autoevolve pollinate
 ```
 
-This reads the leader's results, finds their most impactful experiments, and writes `clash-hints.md` to the repo root. All agents can read this file regardless of their branch -- it contains winning experiments, code diffs, and incorporation suggestions.
+This reads the leader's results, finds their most impactful experiments, and writes `evolve-hints.md` to the repo root. All agents can read this file regardless of their branch -- it contains winning experiments, code diffs, and incorporation suggestions.
 
 Timing matters: too early spreads noise, too late means agents have diverged beyond benefit. See `references/violations.md` for pollination timing guidance.
 
 ### 5. Export for analysis
 
 ```bash
-autoclash export --format json -o clash-results.json
-autoclash export --format tsv -o clash-results.tsv
+autoevolve export --format json -o evolve-results.json
+autoevolve export --format tsv -o evolve-results.tsv
 ```
 
 ### 6. Built-in strategies
@@ -106,12 +106,12 @@ See `references/strategies.md` for detailed strategy descriptions, tradeoffs, an
 ### 7. CLI reference
 
 ```
-autoclash --help
-autoclash init --agents N --tag TAG [--base-branch BRANCH]
-autoclash status [--quiet]
-autoclash leaderboard [--detailed]
-autoclash pollinate
-autoclash export --format json|tsv [-o FILE]
+autoevolve --help
+autoevolve init --agents N --tag TAG [--base-branch BRANCH]
+autoevolve status [--quiet]
+autoevolve leaderboard [--detailed]
+autoevolve pollinate
+autoevolve export --format json|tsv [-o FILE]
 ```
 
 ---
@@ -125,7 +125,7 @@ This skill works with sibling autoresearch skills:
 | **autoresearch-evaluate** | Each agent uses autojudge to evaluate its own experiments |
 | **autoresearch-steer** | Each agent uses autosteer to choose experiments per its assigned strategy |
 
-Typical flow: **init clash** -> agents independently **run** -> **evaluate** -> **steer** -> **monitor leaderboard** -> **pollinate** -> repeat.
+Typical flow: **init evolve** -> agents independently **run** -> **evaluate** -> **steer** -> **monitor leaderboard** -> **pollinate** -> repeat.
 
 ---
 
@@ -135,7 +135,7 @@ Typical flow: **init clash** -> agents independently **run** -> **evaluate** -> 
 |-------------|-----------------|
 | All agents using the same strategy | Use diverse strategies for better coverage |
 | Never running `pollinate` | Cross-pollinate regularly to spread winning ideas |
-| Launching clash with < 3 agents | 3+ agents needed for meaningful strategy diversity |
+| Launching evolve with < 3 agents | 3+ agents needed for meaningful strategy diversity |
 | Not monitoring via `status`/`leaderboard` | Check leaderboard to know when to pollinate |
 | Pollinating too early (before clear winners) | Wait for a leader with 3+ keeps before pollinating |
 | Pollinating too late (agents diverged) | Pollinate before strategies fork beyond reconciliation |

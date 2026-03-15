@@ -1,28 +1,28 @@
-# autoclash
+# autoevolve
 
 Multi-agent research competition orchestrator for [autoresearch](https://github.com/karpathy/autoresearch). Run parallel AI agents with different strategies and cross-pollinate winning ideas.
 
 ## Install
 
 ```bash
-pip install autoclash
+pip install autoevolve
 ```
 
 ## Usage
 
 ```bash
 # Initialize a 3-agent competition
-autoclash init --agents 3 --tag mar15
+autoevolve init --agents 3 --tag mar15
 
 # Check who's winning
-autoclash status
-autoclash leaderboard --detailed
+autoevolve status
+autoevolve leaderboard --detailed
 
 # Spread winning ideas to all agents
-autoclash pollinate
+autoevolve pollinate
 
 # Export results
-autoclash export --format json -o clash-results.json
+autoevolve export --format json -o evolve-results.json
 ```
 
 ## How It Works
@@ -30,7 +30,7 @@ autoclash export --format json -o clash-results.json
 1. **init** creates one git branch per agent, each with a different research strategy
 2. Each agent works independently on its branch using autojudge + autosteer
 3. **leaderboard** ranks agents by best val_bpb with keep rate tracking
-4. **pollinate** writes the leader's best experiments to `clash-hints.md` — readable from any branch
+4. **pollinate** writes the leader's best experiments to `evolve-hints.md` — readable from any branch
 5. Agents incorporate hints and continue competing
 
 ## Built-in Strategies
@@ -50,12 +50,12 @@ Strategies are assigned round-robin. With 3 agents, you get 3 different strategi
 
 | Command | Description |
 |---------|-------------|
-| `autoclash init --agents N --tag TAG` | Create N agent branches |
-| `autoclash status` | Quick overview with current leader |
-| `autoclash leaderboard` | Ranked table with keep rates |
-| `autoclash leaderboard --detailed` | Full trajectories + strategy effectiveness |
-| `autoclash pollinate` | Cross-pollinate winning ideas |
-| `autoclash export --format json\|tsv` | Export results for analysis |
+| `autoevolve init --agents N --tag TAG` | Create N agent branches |
+| `autoevolve status` | Quick overview with current leader |
+| `autoevolve leaderboard` | Ranked table with keep rates |
+| `autoevolve leaderboard --detailed` | Full trajectories + strategy effectiveness |
+| `autoevolve pollinate` | Cross-pollinate winning ideas |
+| `autoevolve export --format json\|tsv` | Export results for analysis |
 
 ## Requirements
 

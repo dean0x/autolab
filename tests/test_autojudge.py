@@ -1269,7 +1269,7 @@ class TestCli:
         result = runner.invoke(cli, ["--version"])
 
         assert result.exit_code == 0
-        assert "0.1.0" in result.output
+        assert "1.0.0" in result.output
 
     def test_cli_json_output_matches_verdict_from_analysis(self, tmp_path: Path) -> None:
         tsv = tmp_path / "results.tsv"

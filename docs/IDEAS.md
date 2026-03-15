@@ -9,7 +9,7 @@ Each tool can be installed independently from its directory:
 ```bash
 cd auto-judge && uv pip install -e .   # installs `autojudge` CLI
 cd auto-steer && uv pip install -e .   # installs `autosteer` CLI
-cd auto-clash && uv pip install -e .   # installs `autoclash` CLI
+cd auto-evolve && uv pip install -e .   # installs `autoevolve` CLI
 ```
 
 Requires Python >= 3.10 (matching autoresearch).
@@ -26,9 +26,9 @@ autojudge --results results.tsv
 autosteer --results results.tsv
 
 # Set up a multi-agent competition
-autoclash init --agents 3 --tag mar15
-autoclash status
-autoclash pollinate
+autoevolve init --agents 3 --tag mar15
+autoevolve status
+autoevolve pollinate
 ```
 
 ## Tools
@@ -50,12 +50,12 @@ Analyzes experiment history and generates smart next-step suggestions.
 - Strategy modes: auto / explore / exploit
 - Word-boundary-aware keyword matching to avoid false classifications
 
-### 3. autoclash — Multi-Agent Research Competition
+### 3. autoevolve — Multi-Agent Research Competition
 Orchestrates multiple AI agents competing on the same autoresearch problem.
 - Creates separate git branches with different research strategies per agent
 - Monitors results.tsv across all branches without checkout
 - Produces a ranked leaderboard with trajectory analysis
-- Cross-pollinates via `clash-hints.md` (no branch checkout, safe for concurrent agents)
+- Cross-pollinates via `evolve-hints.md` (no branch checkout, safe for concurrent agents)
 - 6 built-in strategies: architecture-first, hyperparams-first, optimizer-first, regularization-first, efficiency-first, radical
 
 All three tools support `--quiet` / `-q` for minimal output and `--no-color` for plain text (auto-disabled when piped):
@@ -68,7 +68,7 @@ autojudge --results results.tsv --quiet
 autosteer --results results.tsv --quiet
 
 # Leader summary
-autoclash status --quiet
+autoevolve status --quiet
 
 # Pipe-safe (color auto-disabled)
 autojudge --results results.tsv | cat
@@ -86,9 +86,9 @@ Located at `skills/autoresearch-evaluate/SKILL.md`.
 Teaches the agent to use `autosteer` for guided experiment selection, especially when stuck.
 Located at `skills/autoresearch-steer/SKILL.md`.
 
-### autoresearch-clash
-Teaches the agent to set up and manage multi-agent competitions with `autoclash`.
-Located at `skills/autoresearch-clash/SKILL.md`.
+### autoresearch-evolve
+Teaches the agent to set up and manage multi-agent competitions with `autoevolve`.
+Located at `skills/autoresearch-evolve/SKILL.md`.
 
 ## Integration
 
