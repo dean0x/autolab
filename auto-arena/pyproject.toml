@@ -1,0 +1,35 @@
+[project]
+name = "autoarena"
+version = "0.1.0"
+description = "Multi-agent research competition orchestrator for autoresearch"
+requires-python = ">=3.10"
+license = "MIT"
+readme = "README.md"
+keywords = ["autoresearch", "karpathy", "gpt", "pretraining", "multi-agent"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = ["click>=8.0"]
+
+[project.scripts]
+autoarena = "auto_arena:main"
+
+[project.urls]
+Homepage = "https://github.com/dean0x/autolab"
+Repository = "https://github.com/dean0x/autolab"
+Issues = "https://github.com/dean0x/autolab/issues"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["auto_arena.py"]

@@ -1,0 +1,35 @@
+[project]
+name = "autojudge"
+version = "0.1.0"
+description = "Smarter experiment evaluation for autoresearch — replaces eyeballing val_bpb with statistical verdicts"
+requires-python = ">=3.10"
+license = "MIT"
+readme = "README.md"
+keywords = ["autoresearch", "karpathy", "gpt", "pretraining", "experiment-evaluation"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = ["click>=8.0"]
+
+[project.scripts]
+autojudge = "auto_judge:main"
+
+[project.urls]
+Homepage = "https://github.com/dean0x/autolab"
+Repository = "https://github.com/dean0x/autolab"
+Issues = "https://github.com/dean0x/autolab/issues"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["auto_judge.py"]

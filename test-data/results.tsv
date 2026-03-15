@@ -1,0 +1,7 @@
+commit	val_bpb	memory_gb	status	description
+abc1234	1.050000	45.2	keep	Baseline: default config
+def5678	1.040000	45.5	keep	Increase depth to 10
+ghi9012	1.060000	46.0	discard	Try larger batch size
+jkl3456	1.035000	44.8	keep	Tune matrix LR to 0.05
+mno7890	1.038000	45.1	discard	Adjust warmdown ratio
+pqr1234	1.030000	45.0	keep	SwiGLU activation

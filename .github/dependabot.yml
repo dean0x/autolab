@@ -1,0 +1,29 @@
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: /auto-judge
+    schedule:
+      interval: weekly
+    reviewers:
+      - dean0x
+
+  - package-ecosystem: pip
+    directory: /auto-steer
+    schedule:
+      interval: weekly
+    reviewers:
+      - dean0x
+
+  - package-ecosystem: pip
+    directory: /auto-arena
+    schedule:
+      interval: weekly
+    reviewers:
+      - dean0x
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    reviewers:
+      - dean0x
