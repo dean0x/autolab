@@ -27,11 +27,12 @@ autoevolve export --format json -o evolve-results.json
 
 ## How It Works
 
-1. **init** creates one git branch per agent, each with a different research strategy
-2. Each agent works independently on its branch using autojudge + autosteer
+1. **init** creates a git worktree per agent in a sibling directory, each with a different research strategy
+2. Each agent works independently in its worktree directory using autojudge + autosteer
 3. **leaderboard** ranks agents by best val_bpb with keep rate tracking
-4. **pollinate** writes the leader's best experiments to `evolve-hints.md` — readable from any branch
+4. **pollinate** writes the leader's best experiments to `evolve-hints.md` in each agent's worktree
 5. Agents incorporate hints and continue competing
+6. **cleanup** removes worktrees, branches, and config when done
 
 ## Built-in Strategies
 
@@ -50,12 +51,14 @@ Strategies are assigned round-robin. With 3 agents, you get 3 different strategi
 
 | Command | Description |
 |---------|-------------|
-| `autoevolve init --agents N --tag TAG` | Create N agent branches |
+| `autoevolve init --agents N --tag TAG` | Create N agent worktrees |
+| `autoevolve init ... --worktree-dir DIR` | Place worktrees in custom directory |
 | `autoevolve status` | Quick overview with current leader |
 | `autoevolve leaderboard` | Ranked table with keep rates |
 | `autoevolve leaderboard --detailed` | Full trajectories + strategy effectiveness |
 | `autoevolve pollinate` | Cross-pollinate winning ideas |
 | `autoevolve export --format json\|tsv` | Export results for analysis |
+| `autoevolve cleanup` | Remove worktrees, branches, and config |
 
 ## Requirements
 

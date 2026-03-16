@@ -1,6 +1,6 @@
 [project]
 name = "autoevolve"
-version = "1.0.0"
+version = "1.1.0"
 description = "Multi-agent research competition orchestrator for autoresearch"
 requires-python = ">=3.10"
 license = "MIT"

@@ -1,24 +1,22 @@
 """Tests for autoevolve — multi-agent competition orchestrator."""
 
 import sys
-
-import pytest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "auto-evolve"))
 
 from auto_evolve import (
+    STRATEGIES,
     AgentConfig,
     AgentStatus,
     EvolveConfig,
     Experiment,
-    STRATEGIES,
     _build_hints_content,
     _compute_improvements,
     _generate_program_md,
     _parse_results_tsv,
+    _resolve_worktree_path,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -208,6 +206,31 @@ class TestGenerateProgramMd:
         md = _generate_program_md(STRATEGIES[0], agent_id=1, tag="test")
         assert "results.tsv" in md
         assert "train.py" in md
+
+    def test_no_commit_results_instruction(self):
+        md = _generate_program_md(STRATEGIES[0], agent_id=1, tag="test")
+        assert "Do NOT commit results.tsv" in md
+        assert "Commit results.tsv" not in md
+
+
+# ---------------------------------------------------------------------------
+# Resolve worktree path
+# ---------------------------------------------------------------------------
+
+class TestResolveWorktreePath:
+    def test_empty_worktree_path(self):
+        agent = AgentConfig(id=1, branch="b", strategy="s", worktree_path="")
+        assert _resolve_worktree_path(agent) is None
+
+    def test_absolute_path(self):
+        agent = AgentConfig(id=1, branch="b", strategy="s", worktree_path="/tmp/wt")
+        assert _resolve_worktree_path(agent) == Path("/tmp/wt")
+
+    def test_relative_path_with_repo_root(self):
+        agent = AgentConfig(id=1, branch="b", strategy="s", worktree_path="myrepo-agent-1")
+        result = _resolve_worktree_path(agent, repo_root=Path("/tmp/user/myrepo"))
+        # Use .resolve() on expected too — macOS /tmp -> /private/tmp
+        assert result == Path("/tmp/user/myrepo-agent-1").resolve()
 
 
 # ---------------------------------------------------------------------------

@@ -12,13 +12,12 @@ import os
 import subprocess
 import sys
 import tempfile
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Generic, Optional, TypeVar, Union
+from typing import Generic, TypeVar, Union
 
 import click
-
 
 # ---------------------------------------------------------------------------
 # Output infrastructure
@@ -141,6 +140,7 @@ class AgentConfig:
     branch: str
     strategy: str
     status: str = "pending"
+    worktree_path: str = ""
 
 
 @dataclass
@@ -158,8 +158,8 @@ class AgentStatus:
     """Runtime status of an agent derived from its results.tsv."""
     agent: AgentConfig
     experiments: list[Experiment]
-    best_val_bpb: Optional[float]
-    best_experiment: Optional[Experiment]
+    best_val_bpb: float | None
+    best_experiment: Experiment | None
     keep_count: int
 
 
@@ -167,7 +167,7 @@ class AgentStatus:
 # Git helpers — thin wrappers around subprocess
 # ---------------------------------------------------------------------------
 
-def _run_git(*args: str, check: bool = True, timeout: int = 30) -> Result[str]:
+def _run_git(*args: str, check: bool = True, timeout: int = 30, cwd: Path | None = None) -> Result[str]:
     """Run a git command and return stdout on success, or an Err on failure."""
     cmd = ["git"] + list(args)
     try:
@@ -177,6 +177,7 @@ def _run_git(*args: str, check: bool = True, timeout: int = 30) -> Result[str]:
             text=True,
             check=check,
             timeout=timeout,
+            cwd=cwd,
         )
         return Ok(proc.stdout.strip())
     except subprocess.TimeoutExpired:
@@ -227,6 +228,21 @@ def _git_log_oneline(branch: str, base_commit: str, max_count: int = 50) -> Resu
     )
 
 
+_repo_root_cache: Path | None = None
+
+
+def _get_repo_root() -> Path | None:
+    """Return the repo root, caching the result to avoid repeated subprocesses."""
+    global _repo_root_cache
+    if _repo_root_cache is not None:
+        return _repo_root_cache
+    result = _run_git("rev-parse", "--show-toplevel")
+    if result.ok:
+        _repo_root_cache = Path(result.value)
+        return _repo_root_cache
+    return None
+
+
 # ---------------------------------------------------------------------------
 # Evolve config persistence
 # ---------------------------------------------------------------------------
@@ -235,11 +251,22 @@ EVOLVE_CONFIG_FILE = "evolve.json"
 
 
 def _evolve_config_path() -> Path:
-    """Return the path to evolve.json in the repo root."""
-    result = _run_git("rev-parse", "--show-toplevel")
-    if not result.ok:
+    """Return the path to evolve.json in the repo root (or main worktree root)."""
+    root = _get_repo_root()
+    if root is None:
         return Path(EVOLVE_CONFIG_FILE)
-    return Path(result.value) / EVOLVE_CONFIG_FILE
+    path = root / EVOLVE_CONFIG_FILE
+    if path.exists():
+        return path
+    # If in a worktree, check main worktree root
+    git_common = _run_git("rev-parse", "--git-common-dir", check=False)
+    if git_common.ok:
+        common_dir = root / git_common.value
+        main_root = common_dir.resolve().parent
+        alt_path = main_root / EVOLVE_CONFIG_FILE
+        if alt_path.exists():
+            return alt_path
+    return path
 
 
 def _load_evolve_config() -> Result[EvolveConfig]:
@@ -258,6 +285,7 @@ def _load_evolve_config() -> Result[EvolveConfig]:
                 branch=a["branch"],
                 strategy=a["strategy"],
                 status=a.get("status", "pending"),
+                worktree_path=a.get("worktree_path", ""),
             )
             for a in raw.get("agents", [])
         ]
@@ -333,21 +361,42 @@ def _parse_results_tsv(raw: str) -> list[Experiment]:
     return experiments
 
 
+def _resolve_worktree_path(agent: AgentConfig, repo_root: Path | None = None) -> Path | None:
+    """Resolve agent's worktree_path (stored relative) to absolute."""
+    if not agent.worktree_path:
+        return None
+    path = Path(agent.worktree_path)
+    if path.is_absolute():
+        return path
+    # Relative paths are stored relative to repo root's parent
+    root = repo_root or _get_repo_root()
+    if root:
+        return (root.parent / path).resolve()
+    return None
+
+
 def _read_results_for_agent(agent: AgentConfig) -> str:
-    """Read results.tsv for an agent, trying git first then filesystem."""
-    # Try git show first (works if results.tsv is committed)
+    """Read results.tsv for an agent, preferring worktree filesystem."""
+    # Primary: read from worktree path (untracked file)
+    wt = _resolve_worktree_path(agent)
+    if wt:
+        results_path = wt / "results.tsv"
+        if results_path.exists():
+            return results_path.read_text()
+
+    # Fallback: filesystem if this branch is currently checked out
+    current = _git_current_branch()
+    if current.ok and current.value == agent.branch:
+        root = _get_repo_root()
+        if root:
+            results_path = root / "results.tsv"
+            if results_path.exists():
+                return results_path.read_text()
+
+    # Last resort: git show (backwards compat for committed results.tsv)
     result = _git_show_file(agent.branch, "results.tsv")
     if result.ok and result.value.strip():
         return result.value
-
-    # Fall back to filesystem if this branch is currently checked out
-    current = _git_current_branch()
-    if current.ok and current.value == agent.branch:
-        repo_root = _run_git("rev-parse", "--show-toplevel")
-        if repo_root.ok:
-            results_path = Path(repo_root.value) / "results.tsv"
-            if results_path.exists():
-                return results_path.read_text()
 
     return ""
 
@@ -385,7 +434,7 @@ def _compute_improvements(experiments: list[Experiment]) -> list[tuple[Experimen
     avoiding comparisons to crashed experiments (val_bpb=0.0) or discards.
     """
     improvements: list[tuple[Experiment, float]] = []
-    prev_best: Optional[float] = None
+    prev_best: float | None = None
     for exp in experiments:
         if exp.status != "keep" or exp.val_bpb <= 0:
             continue
@@ -418,11 +467,10 @@ def _generate_program_md(strategy: dict[str, str], agent_id: int, tag: str) -> s
 3. Read results: `grep "^val_bpb:\\|^peak_vram_mb:" run.log`
 4. Record results in `results.tsv` (tab-separated):
    - commit (short hash), val_bpb, memory_gb (peak_vram_mb / 1024), status, description
-5. **Commit results.tsv** after each experiment so evolve tracking works:
-   `git add results.tsv && git commit -m "update results"`
-6. If val_bpb improved (lower), set status to `keep` and advance the branch.
+5. Do NOT commit results.tsv — leave it untracked by git.
+6. If val_bpb improved (lower), set status to `keep` and keep the commit.
 7. If val_bpb is equal or worse, set status to `discard` and `git reset --hard HEAD~1`
-   to revert the train.py changes (but keep results.tsv updated).
+   to revert the train.py changes. results.tsv survives because it's untracked.
 8. Repeat indefinitely. Each experiment should build on previous successes.
 
 ## Hints
@@ -441,7 +489,7 @@ Minimize `val_bpb` within the 5-minute time budget per experiment. Lower is bett
 # ---------------------------------------------------------------------------
 
 @click.group(epilog="Exit codes: 0 = success, 1 = error")
-@click.version_option(version="1.0.0", prog_name="autoevolve")
+@click.version_option(version="1.1.0", prog_name="autoevolve")
 @click.option("--no-color", is_flag=True, default=False, help="Disable colored output")
 @click.option("--quiet", "-q", is_flag=True, default=False, help="Minimal output")
 @click.pass_context
@@ -458,9 +506,13 @@ def cli(ctx: click.Context, no_color: bool, quiet: bool) -> None:
 @click.option("--agents", "-n", type=int, required=True, help="Number of competing agents")
 @click.option("--base-branch", "-b", type=str, default="main", help="Branch to fork from")
 @click.option("--tag", "-t", type=str, required=True, help="Evolve tag (e.g. mar15)")
+@click.option(
+    "--worktree-dir", type=click.Path(), default=None,
+    help="Directory for worktrees (default: sibling of repo root)",
+)
 @click.pass_context
-def init(ctx: click.Context, agents: int, base_branch: str, tag: str) -> None:
-    """Initialize a new evolve with N competing agent branches."""
+def init(ctx: click.Context, agents: int, base_branch: str, tag: str, worktree_dir: str | None) -> None:
+    """Initialize a new evolve with N competing agent branches (using git worktrees)."""
     cfg = ctx.obj["cfg"]
     if agents < 1:
         click.echo("Error: --agents must be at least 1.", err=True)
@@ -472,10 +524,8 @@ def init(ctx: click.Context, agents: int, base_branch: str, tag: str) -> None:
         click.echo("Error: not inside a git repository.", err=True)
         sys.exit(1)
 
-    # Ensure no uncommitted changes before checking out branches
-    if not _git_working_tree_clean():
-        click.echo("Error: working tree has uncommitted changes. Commit or stash first.", err=True)
-        sys.exit(1)
+    repo_root_path = Path(repo_root.value)
+    repo_name = repo_root_path.name
 
     # Verify base branch exists
     if not _git_branch_exists(base_branch):
@@ -498,66 +548,77 @@ def init(ctx: click.Context, agents: int, base_branch: str, tag: str) -> None:
         click.echo(f"Error: could not resolve base branch: {base_sha.error}", err=True)
         sys.exit(1)
 
-    # Remember current branch to return to it
-    current_branch = _git_current_branch()
-    if not current_branch.ok:
-        click.echo(f"Error: {current_branch.error}", err=True)
+    # Determine worktree parent directory
+    wt_parent = Path(worktree_dir) if worktree_dir else repo_root_path.parent
+    if not wt_parent.is_dir():
+        click.echo(f"Error: worktree directory '{wt_parent}' does not exist.", err=True)
         sys.exit(1)
 
     agent_configs: list[AgentConfig] = []
-    created_branches: list[str] = []
+    created_worktrees: list[tuple[str, Path]] = []  # (branch_name, worktree_path)
 
     try:
         for i in range(1, agents + 1):
             strategy = STRATEGIES[(i - 1) % len(STRATEGIES)]
             branch_name = f"evolve/{tag}-agent-{i}"
+            wt_dir_name = f"{repo_name}-evolve-{tag}-agent-{i}"
+            wt_path = wt_parent / wt_dir_name
 
             # Check if branch already exists
             if _git_branch_exists(branch_name):
                 click.echo(f"Error: branch '{branch_name}' already exists.", err=True)
                 sys.exit(1)
 
-            # Create branch from base
-            result = _run_git("checkout", "-b", branch_name, base_branch)
-            if not result.ok:
-                click.echo(f"Error creating branch {branch_name}: {result.error}", err=True)
+            # Pre-flight: check for existing worktree directory
+            if wt_path.exists():
+                click.echo(
+                    f"Error: worktree directory '{wt_path}' already exists. "
+                    "Remove it first or use --worktree-dir.",
+                    err=True,
+                )
                 sys.exit(1)
-            created_branches.append(branch_name)
 
-            # Write program.md
+            # Create worktree with new branch
+            result = _run_git("worktree", "add", str(wt_path), "-b", branch_name, base_branch)
+            if not result.ok:
+                click.echo(f"Error creating worktree for {branch_name}: {result.error}", err=True)
+                sys.exit(1)
+            created_worktrees.append((branch_name, wt_path))
+
+            # Write program.md to worktree and commit it there
             program_content = _generate_program_md(strategy, i, tag)
-            program_path = Path(repo_root.value) / "program.md"
+            program_path = wt_path / "program.md"
             program_path.write_text(program_content)
 
-            # Create an initial empty results.tsv with header
-            results_path = Path(repo_root.value) / "results.tsv"
-            if not results_path.exists():
-                results_path.write_text("commit\tval_bpb\tmemory_gb\tstatus\tdescription\n")
-
-            # Commit program.md and results.tsv to the branch
-            _run_git("add", "program.md", "results.tsv")
+            _run_git("add", "program.md", cwd=wt_path)
             commit_result = _run_git(
                 "commit", "-m",
                 f"evolve({tag}): initialize agent {i} with {strategy['key']} strategy",
+                cwd=wt_path,
             )
             if not commit_result.ok:
                 click.echo(f"Warning: commit on {branch_name}: {commit_result.error}", err=True)
+
+            # Write results.tsv header to worktree but do NOT commit (stays untracked)
+            results_path = wt_path / "results.tsv"
+            results_path.write_text("commit\tval_bpb\tmemory_gb\tstatus\tdescription\n")
+
+            # Compute relative worktree path for portability
+            rel_wt_path = os.path.relpath(wt_path, repo_root_path.parent)
 
             agent_configs.append(AgentConfig(
                 id=i,
                 branch=branch_name,
                 strategy=strategy["key"],
                 status="pending",
+                worktree_path=rel_wt_path,
             ))
-    except SystemExit:
-        # Clean up created branches on failure
-        _run_git("checkout", current_branch.value, check=False)
-        for branch in created_branches:
+    except BaseException:
+        # Clean up created worktrees and branches on any failure
+        for branch, wt in created_worktrees:
+            _run_git("worktree", "remove", str(wt), "--force", check=False)
             _run_git("branch", "-D", branch, check=False)
         raise
-    finally:
-        # Always return to original branch
-        _run_git("checkout", current_branch.value, check=False)
 
     # Save evolve config (not committed)
     evolve = EvolveConfig(
@@ -579,15 +640,16 @@ def init(ctx: click.Context, agents: int, base_branch: str, tag: str) -> None:
     for ac in agent_configs:
         strategy_info = next(s for s in STRATEGIES if s["key"] == ac.strategy)
         click.echo(f"  Agent {ac.id}: {ac.branch} ({strategy_info['label']})")
+        click.echo(f"           {ac.worktree_path}")
     click.echo()
-    click.echo("To start each agent, check out its branch and run your autoresearch agent:")
+    click.echo("To start each agent, navigate to its directory:")
     click.echo()
     for ac in agent_configs:
-        click.echo(f"  git checkout {ac.branch}")
-        click.echo(f"  # Start your AI agent here (e.g., claude, codex, gemini)")
+        click.echo(f"  cd {ac.worktree_path}")
+        click.echo("  # Start your AI agent here (e.g., claude, codex, gemini)")
         click.echo()
-    click.echo(f"Monitor progress with: autoevolve status")
-    click.echo(f"Cross-pollinate ideas with: autoevolve pollinate")
+    click.echo("Monitor progress with: autoevolve status")
+    click.echo("Cross-pollinate ideas with: autoevolve pollinate")
 
 
 @cli.command()
@@ -639,11 +701,12 @@ def status(ctx: click.Context) -> None:
             if (leader and s is leader)
             else ""
         )
+        wt_info = f"  [{s.agent.worktree_path}]" if s.agent.worktree_path else ""
         click.echo(
             f"Agent {s.agent.id} ({strategy_info['label']}):  "
             f"{len(s.experiments)} experiments, "
             f"best val_bpb: {bpb_str}, "
-            f"{s.keep_count} keeps{marker}"
+            f"{s.keep_count} keeps{marker}{wt_info}"
         )
 
     if leader and leader.best_experiment:
@@ -687,9 +750,9 @@ def leaderboard(ctx: click.Context, detailed: bool) -> None:
     )
     click.echo()
 
-    header = f"{'Rank':<6}{'Agent':<10}{'Strategy':<25}{'Best BPB':<12}{'Exps':<8}{'Keeps':<8}{'Keep %':<8}"
+    header = f"{'Rank':<6}{'Agent':<10}{'Strategy':<25}{'Best BPB':<12}{'Exps':<8}{'Keeps':<8}{'Keep %':<8}{'Worktree'}"
     click.echo(cfg.styled(header, dim=True))
-    click.echo("-" * 77)
+    click.echo("-" * 100)
 
     for rank, s in enumerate(ranked, 1):
         strategy_info = next(
@@ -699,9 +762,10 @@ def leaderboard(ctx: click.Context, detailed: bool) -> None:
         bpb_str = f"{s.best_val_bpb:.6f}" if s.best_val_bpb is not None else "N/A"
         total = len(s.experiments)
         keep_pct = f"{(s.keep_count / total * 100):.0f}%" if total > 0 else "N/A"
+        wt_str = s.agent.worktree_path or ""
         click.echo(
             f"{rank:<6}{s.agent.id:<10}{strategy_info['label']:<25}"
-            f"{bpb_str:<12}{total:<8}{s.keep_count:<8}{keep_pct:<8}"
+            f"{bpb_str:<12}{total:<8}{s.keep_count:<8}{keep_pct:<8}{wt_str}"
         )
 
     if detailed:
@@ -785,17 +849,17 @@ def _build_hints_content(
     )
     lines: list[str] = [
         f"# Hints from Evolve {config.tag}",
-        f"",
+        "",
         f"Generated by `auto-evolve pollinate` at "
         f"{datetime.now(timezone.utc).isoformat(timespec='seconds')}",
-        f"",
-        f"## Leading Agent",
-        f"",
+        "",
+        "## Leading Agent",
+        "",
         f"Agent {leader.agent.id} ({leader_strategy['label']}) is currently leading "
         f"with best val_bpb: {leader.best_val_bpb:.6f}",
-        f"",
-        f"## Most Impactful Experiments",
-        f"",
+        "",
+        "## Most Impactful Experiments",
+        "",
     ]
 
     # Include up to top 5 most impactful experiments
@@ -806,12 +870,12 @@ def _build_hints_content(
     else:
         for rank, (exp, delta) in enumerate(impactful[:top_n], 1):
             lines.append(f"### {rank}. {exp.description}")
-            lines.append(f"")
+            lines.append("")
             lines.append(f"- **Commit**: {exp.commit}")
             lines.append(f"- **val_bpb**: {exp.val_bpb:.6f}")
             lines.append(f"- **Improvement**: {delta:.6f}")
             lines.append(f"- **Memory**: {exp.memory_gb:.1f} GB")
-            lines.append(f"")
+            lines.append("")
 
             # Try to get the diff for this commit
             diff_result = _run_git(
@@ -820,14 +884,14 @@ def _build_hints_content(
                 check=False,
             )
             if diff_result.ok and diff_result.value.strip():
-                lines.append(f"<details><summary>Code changes</summary>")
-                lines.append(f"")
-                lines.append(f"```diff")
+                lines.append("<details><summary>Code changes</summary>")
+                lines.append("")
+                lines.append("```diff")
                 lines.append(diff_result.value)
-                lines.append(f"```")
-                lines.append(f"")
-                lines.append(f"</details>")
-                lines.append(f"")
+                lines.append("```")
+                lines.append("")
+                lines.append("</details>")
+                lines.append("")
 
     lines.append("## Suggestion")
     lines.append("")
@@ -844,7 +908,6 @@ def _build_hints_content(
 @click.pass_context
 def pollinate(ctx: click.Context) -> None:
     """Cross-pollinate: share winning ideas from the best agent with all others."""
-    cfg = ctx.obj["cfg"]
     config_result = _load_evolve_config()
     if not config_result.ok:
         click.echo(f"Error: {config_result.error}", err=True)
@@ -867,17 +930,24 @@ def pollinate(ctx: click.Context) -> None:
     # Build hints content
     hints_content = _build_hints_content(config, leader, impactful)
 
-    # Write to repo root as an untracked file (no checkout needed!)
-    repo_root = _run_git("rev-parse", "--show-toplevel")
-    if not repo_root.ok:
-        click.echo(f"Error: {repo_root.error}", err=True)
-        sys.exit(1)
+    # Write hints to each agent's worktree directory
+    root = _get_repo_root()
+    written_to: list[str] = []
+    for agent in config.agents:
+        wt = _resolve_worktree_path(agent, root)
+        if wt and wt.exists():
+            hints_path = wt / "evolve-hints.md"
+            hints_path.write_text(hints_content)
+            written_to.append(agent.worktree_path or str(wt))
 
-    hints_path = Path(repo_root.value) / "evolve-hints.md"
-    hints_path.write_text(hints_content)
+    # Also write to repo root for backwards compat
+    if root:
+        hints_path = root / "evolve-hints.md"
+        hints_path.write_text(hints_content)
 
-    click.echo(f"Hints from Agent {leader.agent.id} written to {hints_path}")
-    click.echo("All agents can read this file regardless of their branch.")
+    click.echo(f"Hints from Agent {leader.agent.id} written to {len(written_to)} worktrees:")
+    for wt_path in written_to:
+        click.echo(f"  {wt_path}/evolve-hints.md")
     click.echo()
 
 
@@ -890,9 +960,8 @@ def pollinate(ctx: click.Context) -> None:
 )
 @click.option("--output", "-o", type=click.Path(), default=None, help="Output file path")
 @click.pass_context
-def export(ctx: click.Context, fmt: str, output: Optional[str]) -> None:
+def export(ctx: click.Context, fmt: str, output: str | None) -> None:
     """Export all agent results to a single file for external analysis."""
-    cfg = ctx.obj["cfg"]
     config_result = _load_evolve_config()
     if not config_result.ok:
         click.echo(f"Error: {config_result.error}", err=True)
@@ -952,6 +1021,58 @@ def export(ctx: click.Context, fmt: str, output: Optional[str]) -> None:
         click.echo(f"Exported {fmt.upper()} to {output}")
     else:
         click.echo(content, nl=False)
+
+
+@cli.command()
+@click.option("--export-first", is_flag=True, help="Export results before cleanup")
+@click.option("--yes", "-y", is_flag=True, help="Skip confirmation prompt")
+@click.pass_context
+def cleanup(ctx: click.Context, export_first: bool, yes: bool) -> None:
+    """Remove worktrees, branches, and evolve.json after an evolve is complete."""
+    config_result = _load_evolve_config()
+    if not config_result.ok:
+        click.echo(f"Error: {config_result.error}", err=True)
+        sys.exit(1)
+
+    config = config_result.value
+    root = _get_repo_root()
+
+    if not yes:
+        click.echo(
+            f"This will remove {len(config.agents)} worktrees, their branches, "
+            f"and evolve.json for evolve '{config.tag}'."
+        )
+        click.echo(
+            "WARNING: Untracked files in worktrees (including results.tsv) will be lost."
+        )
+        if not click.confirm("Continue?"):
+            click.echo("Aborted.")
+            return
+
+    if export_first:
+        # Auto-export before cleanup
+        export_path = f"evolve-{config.tag}-export.json"
+        ctx.invoke(export, fmt="json", output=export_path)
+        click.echo(f"Results exported to {export_path}")
+
+    for agent in config.agents:
+        wt = _resolve_worktree_path(agent, root)
+        if wt and wt.exists():
+            result = _run_git("worktree", "remove", str(wt), "--force", check=False)
+            if result.ok:
+                click.echo(f"  Removed worktree: {agent.worktree_path}")
+            else:
+                click.echo(f"  Warning: could not remove worktree {agent.worktree_path}: {result.error}", err=True)
+        _run_git("branch", "-D", agent.branch, check=False)
+
+    # Prune stale worktree refs
+    _run_git("worktree", "prune", check=False)
+
+    # Remove evolve.json
+    config_path = _evolve_config_path()
+    config_path.unlink(missing_ok=True)
+
+    click.echo(f"\nEvolve '{config.tag}' cleaned up.")
 
 
 # ---------------------------------------------------------------------------
