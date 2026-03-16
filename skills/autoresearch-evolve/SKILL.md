@@ -48,18 +48,19 @@ autoevolve init --agents 3 --tag mar15
 ```
 
 This creates:
-- One git branch per agent (`evolve/mar15-agent-1`, `evolve/mar15-agent-2`, etc.)
-- Each branch gets a `program.md` with a different strategy
-- An `evolve.json` config file tracking the competition
+- One git **worktree** per agent in a sibling directory (e.g. `../myrepo-evolve-mar15-agent-1/`)
+- Each worktree has its own branch (`evolve/mar15-agent-1`, etc.) with a `program.md` for its strategy
+- An `evolve.json` config file tracking the competition (in the main repo)
+- An untracked `results.tsv` header in each worktree (not committed — matches autoresearch convention)
 
 Agents are assigned strategies round-robin from the built-in pool. With 3 agents, you get 3 different strategies competing. See `references/strategies.md` for the full catalog.
 
 ### 2. Start each agent
 
-Check out each branch and launch your AI agent. Each agent works independently, using autojudge to evaluate and autosteer to choose its next moves.
+Navigate to each agent's worktree directory and launch your AI agent. Each agent works independently, using autojudge to evaluate and autosteer to choose its next moves.
 
 ```bash
-git checkout evolve/mar15-agent-1
+cd ../myrepo-evolve-mar15-agent-1
 # Start agent (claude, codex, gemini, etc.)
 ```
 
@@ -79,7 +80,7 @@ Check the leaderboard regularly to know when to pollinate. A clear leader with 3
 autoevolve pollinate
 ```
 
-This reads the leader's results, finds their most impactful experiments, and writes `evolve-hints.md` to the repo root. All agents can read this file regardless of their branch -- it contains winning experiments, code diffs, and incorporation suggestions.
+This reads the leader's results, finds their most impactful experiments, and writes `evolve-hints.md` to each agent's worktree directory. All agents can read their local copy — it contains winning experiments, code diffs, and incorporation suggestions.
 
 Timing matters: too early spreads noise, too late means agents have diverged beyond benefit. See `references/violations.md` for pollination timing guidance.
 
@@ -107,11 +108,12 @@ See `references/strategies.md` for detailed strategy descriptions, tradeoffs, an
 
 ```
 autoevolve --help
-autoevolve init --agents N --tag TAG [--base-branch BRANCH]
+autoevolve init --agents N --tag TAG [--base-branch BRANCH] [--worktree-dir DIR]
 autoevolve status [--quiet]
 autoevolve leaderboard [--detailed]
 autoevolve pollinate
 autoevolve export --format json|tsv [-o FILE]
+autoevolve cleanup [--export-first] [--yes]
 ```
 
 ---
