@@ -949,7 +949,7 @@ def format_json(result: AnalysisResult) -> str:
 # ---------------------------------------------------------------------------
 
 @click.command(epilog="Exit codes: 0 = success, 1 = file error")
-@click.version_option(version="1.0.0", prog_name="autosteer")
+@click.version_option(version="1.0.1", prog_name="autosteer")
 @click.option(
     "--results", "results_path",
     default="results.tsv",

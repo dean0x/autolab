@@ -485,7 +485,7 @@ Minimize `val_bpb` within the 5-minute time budget per experiment. Lower is bett
 # ---------------------------------------------------------------------------
 
 @click.group(epilog="Exit codes: 0 = success, 1 = error")
-@click.version_option(version="1.1.0", prog_name="autoevolve")
+@click.version_option(version="1.1.1", prog_name="autoevolve")
 @click.option("--no-color", is_flag=True, default=False, help="Disable colored output")
 @click.option("--quiet", "-q", is_flag=True, default=False, help="Minimal output")
 @click.pass_context
@@ -1014,7 +1014,7 @@ def export(ctx: click.Context, fmt: str, output: str | None) -> None:
         rows: list[str] = [header]
         for s in statuses:
             for e in s.experiments:
-                safe_desc = e.description.replace("\n", " ").replace("\r", " ")
+                safe_desc = e.description.replace("\t", " ").replace("\n", " ").replace("\r", " ")
                 rows.append(
                     f"{s.agent.id}\t{s.agent.strategy}\t{e.commit}\t"
                     f"{e.val_bpb}\t{e.memory_gb}\t{e.status}\t{safe_desc}\n"

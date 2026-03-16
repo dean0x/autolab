@@ -26,9 +26,9 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 dependencies = [
-    "autojudge==1.0.0",
-    "autosteer==1.0.0",
-    "autoevolve==1.1.0",
+    "autojudge==1.0.1",
+    "autosteer==1.0.1",
+    "autoevolve==1.1.1",
 ]
 
 [project.urls]
