@@ -1,6 +1,6 @@
 [project]
 name = "autosteer"
-version = "1.0.0"
+version = "1.0.1"
 description = "Research direction generator for autoresearch — analyzes experiment history and suggests next steps"
 requires-python = ">=3.10"
 license = "MIT"
