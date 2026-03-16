@@ -410,10 +410,10 @@ _CATEGORY_KEYWORDS: tuple[tuple[Category, tuple[str, ...]], ...] = (
     (Category.OPTIMIZER, (
         "optimizer", "muon", "adam", "sgd", "momentum", "ns_step",
         "newton", "schulz", "polar", "orthogonal",
+        "weight_decay", "weight decay",
     )),
     (Category.REGULARIZATION, (
         "dropout", "z-loss", "z_loss", "softcap", "regulariz",
-        "weight_decay", "weight decay",
     )),
     (Category.EMBEDDING, (
         "embedding", "embed", "token embed", "resformer", "rope",

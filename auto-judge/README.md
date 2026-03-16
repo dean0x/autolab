@@ -38,7 +38,11 @@ Exit code 1 = input error (file not found, parse failure).
 
 ```bash
 # Auto-evaluate and commit or revert
-autojudge --results results.tsv --run-log run.log && git commit -m "keep" || git reset --hard HEAD~1
+if autojudge --results results.tsv --run-log run.log; then
+    git commit -m "keep"
+else
+    git reset --hard HEAD~1
+fi
 ```
 
 ## JSON Output
@@ -47,10 +51,14 @@ autojudge --results results.tsv --run-log run.log && git commit -m "keep" || git
 {
   "verdict": "KEEP",
   "confidence": 0.82,
+  "val_bpb": 3.87,
+  "prev_best": 3.91,
+  "delta": -0.04,
   "delta_pct": -1.01,
   "noise_floor": 0.02,
   "on_pareto_frontier": true,
-  "suggestion": "Improvement looks real. Commit and continue."
+  "suggestion": "Good improvement in val_bpb. This experiment is on the Pareto frontier. Good progress.",
+  "...": "plus efficiency, trends, pareto_frontier, experiment details"
 }
 ```
 

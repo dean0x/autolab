@@ -39,14 +39,17 @@ autosteer --results results.tsv --quiet
 
 Each suggestion includes:
 - **Badge**: `[EXPLORE]` or `[EXPLOIT]` indicating category status
-- **Risk level**: `low`, `medium`, or `high`
-- **Rationale**: Why this was ranked where it is
+- **Category, risk, and expected improvement range**
+- **Reasoning**: Why this direction is recommended
 
 ```
-[1] [EXPLOIT] Tune learning rate warmup schedule          risk: low
-    Rationale: Learning rate experiments have 3 keeps in 4 attempts.
-[2] [EXPLORE] Try rotary position embeddings               risk: medium
-    Rationale: Positional encoding category untested. High potential.
+1. [EXPLOIT] Tune learning rate warmup schedule
+   Category: hyperparams | Risk: low | Expected: +0.1-0.3%
+   Currently WARMUP_RATIO=0.0 (no warmup). Try WARMUP_RATIO=0.05...
+
+2. [EXPLORE] Tune RoPE base frequency
+   Category: embedding | Risk: low | Expected: +0.1-0.3%
+   Adjust the RoPE base frequency (theta)...
 ```
 
 ## How It Works

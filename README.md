@@ -36,7 +36,7 @@ Experiment #14: val_bpb 3.91 → 3.87
 
 Verdicts: `STRONG_KEEP` | `KEEP` | `MARGINAL` | `RETEST` | `DISCARD` | `CRASH`
 
-Exit codes enable scripting: `autojudge --results results.tsv && git commit -m "keep" || git reset --hard HEAD~1`
+Exit codes enable scripting: `if autojudge --results results.tsv; then git commit -m "keep"; else git reset --hard HEAD~1; fi`
 
 ### autosteer — Research Direction Generator
 
@@ -77,7 +77,7 @@ These tools plug into the standard autoresearch loop:
 1. autosteer --results results.tsv         # Pick next experiment
 2. Implement the suggestion in train.py
 3. uv run train.py > run.log 2>&1          # Train
-4. autojudge --results results.tsv         # Evaluate
+4. autojudge --results results.tsv --run-log run.log  # Evaluate
 5. Keep or discard based on verdict
 6. Repeat
 ```

@@ -191,8 +191,8 @@ class TestClassifyExperiment:
     def test_regularization_keyword_z_loss_underscore(self) -> None:
         assert classify_experiment("Add z_loss", "") == Category.REGULARIZATION
 
-    def test_regularization_keyword_weight_decay(self) -> None:
-        assert classify_experiment("Tune weight_decay", "") == Category.REGULARIZATION
+    def test_optimizer_keyword_weight_decay(self) -> None:
+        assert classify_experiment("Tune weight_decay", "") == Category.OPTIMIZER
 
     def test_regularization_keyword_softcap(self) -> None:
         assert classify_experiment("Adjust softcap value", "") == Category.REGULARIZATION

@@ -52,10 +52,10 @@ Analyzes experiment history and generates smart next-step suggestions.
 
 ### 3. autoevolve — Multi-Agent Research Competition
 Orchestrates multiple AI agents competing on the same autoresearch problem.
-- Creates separate git branches with different research strategies per agent
-- Monitors results.tsv across all branches without checkout
+- Creates separate git worktrees with different research strategies per agent
+- Monitors results.tsv from each agent's worktree directory
 - Produces a ranked leaderboard with trajectory analysis
-- Cross-pollinates via `evolve-hints.md` (no branch checkout, safe for concurrent agents)
+- Cross-pollinates via `evolve-hints.md` written to each agent's worktree
 - 6 built-in strategies: architecture-first, hyperparams-first, optimizer-first, regularization-first, efficiency-first, radical
 
 All three tools support `--quiet` / `-q` for minimal output and `--no-color` for plain text (auto-disabled when piped):
@@ -92,7 +92,7 @@ Located at `skills/autoresearch-evolve/SKILL.md`.
 
 ## Integration
 
-`skills/program-addon.md` is a drop-in snippet you can append to your autoresearch `program.md`. It modifies the experiment loop to:
+`templates/program-addon.md` is a drop-in snippet you can append to your autoresearch `program.md`. It modifies the experiment loop to:
 1. Evaluate with `autojudge` after each run (replaces manual val_bpb comparison)
 2. Call `autosteer` when stuck (3+ consecutive discards)
 3. Use exit codes for automated keep/discard decisions
