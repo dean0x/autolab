@@ -11,13 +11,7 @@ Three CLIs that make the autoresearch experiment loop smarter: evaluate results 
 ## Install
 
 ```bash
-# All three tools
-pip install autolab
-
-# Or individually
-pip install autojudge
-pip install autosteer
-pip install autoevolve
+pip install autojudge autosteer autoevolve
 ```
 
 Requires Python >= 3.10 (matching autoresearch).

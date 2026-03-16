@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -212,11 +213,6 @@ def _git_working_tree_clean() -> bool:
     """Check that the working tree has no uncommitted changes."""
     result = _run_git("status", "--porcelain", check=False)
     return result.ok and result.value.strip() == ""
-
-
-def _git_diff_commits(commit_a: str, commit_b: str) -> Result[str]:
-    """Get the diff between two commits."""
-    return _run_git("diff", commit_a, commit_b)
 
 
 def _git_log_oneline(branch: str, base_commit: str, max_count: int = 50) -> Result[str]:
@@ -518,6 +514,15 @@ def init(ctx: click.Context, agents: int, base_branch: str, tag: str, worktree_d
         click.echo("Error: --agents must be at least 1.", err=True)
         sys.exit(1)
 
+    # Validate tag for safe use in branch names and directory paths
+    if not re.match(r'^[a-zA-Z0-9][a-zA-Z0-9_-]*$', tag):
+        click.echo(
+            "Error: --tag must start with alphanumeric and contain only "
+            "alphanumeric, hyphens, or underscores.",
+            err=True,
+        )
+        sys.exit(1)
+
     # Verify we are inside a git repo
     repo_root = _run_git("rev-parse", "--show-toplevel")
     if not repo_root.ok:
@@ -794,7 +799,7 @@ def leaderboard(ctx: click.Context, detailed: bool) -> None:
 
             running_best = float("inf")
             for idx, exp in enumerate(s.experiments, 1):
-                is_new_best = exp.val_bpb < running_best
+                is_new_best = exp.val_bpb > 0 and exp.val_bpb < running_best
                 if is_new_best:
                     running_best = exp.val_bpb
                 marker = f" {cfg.styled(SYM_KEEP, fg='green')}" if is_new_best else ""
@@ -930,10 +935,12 @@ def pollinate(ctx: click.Context) -> None:
     # Build hints content
     hints_content = _build_hints_content(config, leader, impactful)
 
-    # Write hints to each agent's worktree directory
+    # Write hints to each non-leader agent's worktree directory
     root = _get_repo_root()
     written_to: list[str] = []
     for agent in config.agents:
+        if agent.id == leader.agent.id:
+            continue
         wt = _resolve_worktree_path(agent, root)
         if wt and wt.exists():
             hints_path = wt / "evolve-hints.md"
@@ -1007,9 +1014,10 @@ def export(ctx: click.Context, fmt: str, output: str | None) -> None:
         rows: list[str] = [header]
         for s in statuses:
             for e in s.experiments:
+                safe_desc = e.description.replace("\n", " ").replace("\r", " ")
                 rows.append(
                     f"{s.agent.id}\t{s.agent.strategy}\t{e.commit}\t"
-                    f"{e.val_bpb}\t{e.memory_gb}\t{e.status}\t{e.description}\n"
+                    f"{e.val_bpb}\t{e.memory_gb}\t{e.status}\t{safe_desc}\n"
                 )
         content = "".join(rows)
     else:

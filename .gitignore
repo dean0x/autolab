@@ -33,6 +33,10 @@ htmlcov/
 # Claude Code working memory
 .memory/
 
+# autoevolve generated files
+evolve.json
+evolve-hints.md
+
 # Distribution
 *.tar.gz
 .docs/
